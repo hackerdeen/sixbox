@@ -27,11 +27,14 @@ IPv6EtherShield ipv6ES = IPv6EtherShield();
 #define GREEN_PIN           2
 #define BUZZER_PIN          3
 #define YELLOW_PIN          4
+#define RED_PIN             5
 
 char* greenOnExpect = " X-Green: On";
 char* greenOffExpect = " X-Green: Off";
 char* yellowOnExpect = " X-Yellow: On";
 char* yellowOffExpect = " X-Yellow: Off";
+char* redOnExpect = " X-Red: On";
+char* redOffExpect = " X-Red: Off";
 char* buzzExpect = " X-Buzz: Yes";
 
 char* jsonTrue = "true";
@@ -40,9 +43,9 @@ char* jsonFalse = "false";
 char httpState = WAITING_FOR_REQUEST;
 char sendingDataLine;
 
-int buzzTime, greenTime, yellowTime;
+int buzzTime, greenTime, redTime, yellowTime;
 
-bool green, yellow;
+bool green, yellow, red;
 
 void setup() {
   // init electronics
@@ -50,8 +53,7 @@ void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(YELLOW_PIN, OUTPUT);
-  
-  Serial.begin(9600);
+  pinMode(RED_PIN, OUTPUT);
   
   // init network-device
   ipv6ES.initENC28J60(mMAC);
@@ -120,6 +122,14 @@ void processIncomingData() {
               yellow = false;
             }
             
+            if ( checkHeader(newData, redOnExpect ) ) {
+              red = true;
+            }
+            
+            if ( checkHeader(newData, redOffExpect ) ) {
+              red = false;
+            }
+            
             if ( checkHeader(newData, buzzExpect) ) {
               buzzTime = 1000;
             }
@@ -136,9 +146,10 @@ void processIncomingData() {
       
     case HTTP_OK_SENT:
       char reply[60];
-      sprintf(reply, "{\r\n  \"greenLED\": %s,\r\n  \"yellowLED\": %s,\r\n",
+      sprintf(reply, "{\r\n  \"greenLED\": %s,\r\n  \"yellowLED\": %s,\r\n\"redLED\": %s,\r\n",
          ( green ) ? jsonTrue : jsonFalse,
-         ( yellow ) ? jsonTrue : jsonFalse);
+         ( yellow ) ? jsonTrue : jsonFalse,
+         ( red ) ? jsonTrue : jsonFalse );
       ipv6ES.sendData(reply, strlen(reply));
       httpState++;
       sendingDataLine = 0;
@@ -204,4 +215,12 @@ void loop() {
     digitalWrite(YELLOW_PIN, LOW);
   }
   
+  if ( redTime > 0 || red ) {
+    digitalWrite(RED_PIN, HIGH); 
+    if ( redTime > 0 ) {
+      --redTime;
+    }
+  } else {
+    digitalWrite(RED_PIN, LOW);
+  }
 }

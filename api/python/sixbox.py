@@ -21,6 +21,14 @@ class Sixbox:
 			self.waiting['X-Green'] = 'Off'
 		if immediate:
 			self.update()
+	
+	def red(self, on, immediate=False):
+		if on:
+			self.waiting['X-Red'] = 'On'
+		else:
+			self.waiting['X-Red'] = 'Off'
+		if immediate:
+			self.update()
 
 	def buzz(self, immediate=False):
 		self.waiting['X-Buzz'] = 'Yes'
